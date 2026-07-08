@@ -30,13 +30,9 @@ header p {
 }
 
 #logo {
-  width: 96px;
-  height: 96px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
-  box-sizing: border-box;
-  padding: 0px;
-  background: white;
-  border-radius: 16px;
 }
 
 .controls {
