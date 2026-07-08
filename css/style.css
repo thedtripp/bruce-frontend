@@ -19,6 +19,22 @@ header p {
   margin-top: 0;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title-row h1 {
+  margin: 0;
+}
+
+#logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .controls {
   display: flex;
   gap: 0.75rem;

@@ -4,12 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bruce Job Board</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/png" href="img/bruce_logo.png" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header>
     <p><a href="https://ddtripp.com">&larr; ddtripp.com</a></p>
-    <h1>Bruce Job Board</h1>
+    <div class="title-row">
+      <img src="img/bruce_logo.png" alt="Bruce logo" id="logo" />
+      <h1>Bruce Job Board</h1>
+    </div>
     <p>Job postings fetched daily from Greenhouse, Lever, and Ashby job boards.</p>
     <p id="last-updated"></p>
   </header>
@@ -55,6 +59,6 @@
     <button id="next-page" type="button">Next</button>
   </div>
 
-  <script src="app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

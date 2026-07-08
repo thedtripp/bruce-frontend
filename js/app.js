@@ -86,7 +86,7 @@ nextBtn.addEventListener("click", () => {
   renderPage();
 });
 
-fetch("jobs.json")
+fetch("data/jobs.json")
   .then((res) => res.json())
   .then((data) => {
     allJobs = data.jobs;
