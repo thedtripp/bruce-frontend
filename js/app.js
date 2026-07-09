@@ -22,6 +22,26 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
+// job.time_since_posted is a string baked in at snapshot-generation time
+// ("2h ago") -- accurate then, but never recomputed, so it silently goes
+// stale the longer it's been since the last refresh or since this tab was
+// loaded. Compute it live from posted_at (a raw timestamp) against the
+// browser's actual clock instead. Mirrors common/job_board_common.py's
+// time_since_posted() formatting for consistency with the email/issue
+// reports.
+function formatTimeAgo(isoString) {
+  if (!isoString) return "unknown";
+  const posted = new Date(isoString);
+  if (Number.isNaN(posted.getTime())) return "unknown";
+  const totalMinutes = Math.max(0, Math.floor((Date.now() - posted.getTime()) / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `${days}d ${hours}h ago`;
+  if (hours > 0) return `${hours}h ${minutes}m ago`;
+  return `${minutes}m ago`;
+}
+
 // Jobs arrive from jobs.json in a deliberately neutral order (not ranked
 // by anyone's resume/location preferences -- see write_web_snapshot()'s
 // docstring in the bruce-bot repo). Recency is the default sort (newest
@@ -74,7 +94,7 @@ function renderPage() {
       <td>${escapeHtml(job.title)}</td>
       <td>${escapeHtml(job.location)}</td>
       <td>${escapeHtml(job.source)}</td>
-      <td>${escapeHtml(job.time_since_posted)}</td>
+      <td>${escapeHtml(formatTimeAgo(job.posted_at))}</td>
       <td>${escapeHtml((job.matched_keywords || []).join(", "))}</td>
       <td><a href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer">View</a></td>
     </tr>`
@@ -106,6 +126,11 @@ nextBtn.addEventListener("click", () => {
   currentPage += 1;
   renderPage();
 });
+
+// Re-render every minute so "posted X ago" keeps counting forward for a
+// tab left open, instead of freezing at whatever it said on page load --
+// re-filtering/re-sorting isn't needed, just refreshing the displayed age.
+setInterval(renderPage, 60000);
 
 fetch("data/jobs.json")
   .then((res) => res.json())
