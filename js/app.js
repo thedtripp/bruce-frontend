@@ -24,17 +24,18 @@ function escapeHtml(value) {
 
 // Jobs arrive from jobs.json in a deliberately neutral order (not ranked
 // by anyone's resume/location preferences -- see write_web_snapshot()'s
-// docstring in the bruce-bot repo). "Unsorted" here means exactly that:
-// leave allJobs' original order alone. Any other order is something the
-// visitor explicitly chose via the Sort by control, never a default.
+// docstring in the bruce-bot repo). Recency is the default sort (newest
+// first) rather than that raw fetch order, since posted date is an
+// objective fact about the data, not a personal preference -- unlike
+// score, it doesn't favor any one visitor's resume/location criteria.
 function applySort(jobs, sortKey) {
   const sorted = jobs.slice();
   if (sortKey === "score") {
     sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
-  } else if (sortKey === "posted") {
-    sorted.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
   } else if (sortKey === "company") {
     sorted.sort((a, b) => a.company.localeCompare(b.company));
+  } else {
+    sorted.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
   }
   return sorted;
 }
