@@ -8,6 +8,7 @@ let currentPage = 1;
 const searchInput = document.getElementById("search");
 const bucketFilter = document.getElementById("bucket-filter");
 const sourceFilter = document.getElementById("source-filter");
+const sortBy = document.getElementById("sort-by");
 const tbody = document.getElementById("jobs-body");
 const statusEl = document.getElementById("status");
 const lastUpdatedEl = document.getElementById("last-updated");
@@ -21,12 +22,29 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
+// Jobs arrive from jobs.json in a deliberately neutral order (not ranked
+// by anyone's resume/location preferences -- see write_web_snapshot()'s
+// docstring in the bruce-bot repo). "Unsorted" here means exactly that:
+// leave allJobs' original order alone. Any other order is something the
+// visitor explicitly chose via the Sort by control, never a default.
+function applySort(jobs, sortKey) {
+  const sorted = jobs.slice();
+  if (sortKey === "score") {
+    sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
+  } else if (sortKey === "posted") {
+    sorted.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
+  } else if (sortKey === "company") {
+    sorted.sort((a, b) => a.company.localeCompare(b.company));
+  }
+  return sorted;
+}
+
 function applyFilters() {
   const query = searchInput.value.trim().toLowerCase();
   const bucket = bucketFilter.value;
   const source = sourceFilter.value;
 
-  filteredJobs = allJobs.filter((job) => {
+  const matched = allJobs.filter((job) => {
     if (bucket !== "all" && job.bucket !== bucket) return false;
     if (source !== "all" && job.source !== source) return false;
     if (query) {
@@ -35,6 +53,7 @@ function applyFilters() {
     }
     return true;
   });
+  filteredJobs = applySort(matched, sortBy.value);
 
   currentPage = 1;
   renderPage();
@@ -76,6 +95,7 @@ searchInput.addEventListener("input", () => {
 
 bucketFilter.addEventListener("change", applyFilters);
 sourceFilter.addEventListener("change", applyFilters);
+sortBy.addEventListener("change", applyFilters);
 
 prevBtn.addEventListener("click", () => {
   currentPage -= 1;
@@ -90,12 +110,11 @@ fetch("data/jobs.json")
   .then((res) => res.json())
   .then((data) => {
     allJobs = data.jobs;
-    filteredJobs = data.jobs;
     if (data.generated_at) {
       const generated = new Date(data.generated_at);
       lastUpdatedEl.textContent = `Data last updated: ${generated.toLocaleString()}`;
     }
-    renderPage();
+    applyFilters();
   })
   .catch((err) => {
     statusEl.textContent = "Failed to load job data.";
