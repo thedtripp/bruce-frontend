@@ -31,10 +31,9 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   that -- needs a small keyword/synonym dictionary mapping search terms to
   related job-title terms (e.g. doctor -> physician, MD, medical
   officer), checked in addition to the literal substring match.
-- **Document the freshness window, and note room to expand it.**
-  Currently only the freshest jobs show up (bruce-bot's `HOURS_LOOKBACK`,
-  72h). Call this out clearly in the UI/docs so it's not mistaken for a
-  complete listing. Expanding to a 7-day or 30-day window is a reasonable
+- ~~**Document the freshness window, and note room to expand it.**~~ Done
+  (2026-07-09): the header now states the 72h rolling window explicitly.
+  Still open: expanding to a 7-day or 30-day window is a reasonable
   future step, but do it carefully -- more days means a lot more data per
   refresh, so check that the static `jobs.json` fetch + client-side
   filtering approach (and GitHub Pages hosting) still holds up before
