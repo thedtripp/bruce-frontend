@@ -6,7 +6,6 @@ let filteredJobs = [];
 let currentPage = 1;
 
 const searchInput = document.getElementById("search");
-const bucketFilter = document.getElementById("bucket-filter");
 const sourceFilter = document.getElementById("source-filter");
 const sortBy = document.getElementById("sort-by");
 const tbody = document.getElementById("jobs-body");
@@ -46,13 +45,14 @@ function formatTimeAgo(isoString) {
 // by anyone's resume/location preferences -- see write_web_snapshot()'s
 // docstring in the bruce-bot repo). Recency is the default sort (newest
 // first) rather than that raw fetch order, since posted date is an
-// objective fact about the data, not a personal preference -- unlike
-// score, it doesn't favor any one visitor's resume/location criteria.
+// objective fact about the data, not a personal preference. Score-based
+// sorting was removed entirely (not just as a non-default option) --
+// score comes from this user's personal resume-keyword config, so
+// "relevance" here would always mean relevance to one specific person,
+// not to whoever's actually looking at the board (2026-07-09).
 function applySort(jobs, sortKey) {
   const sorted = jobs.slice();
-  if (sortKey === "score") {
-    sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
-  } else if (sortKey === "company") {
+  if (sortKey === "company") {
     sorted.sort((a, b) => a.company.localeCompare(b.company));
   } else {
     sorted.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
@@ -62,11 +62,15 @@ function applySort(jobs, sortKey) {
 
 function applyFilters() {
   const query = searchInput.value.trim().toLowerCase();
-  const bucket = bucketFilter.value;
   const source = sourceFilter.value;
 
+  // No location/bucket filter here -- location_tier()'s Bay-Area-or-
+  // US-remote split is this user's personal target metro, not a
+  // generalizable category, so it's been pulled entirely rather than
+  // just hidden. See write_web_snapshot()'s docstring in the bruce-bot
+  // repo (2026-07-09) for the reasoning; a location filter based on more
+  // generalized principles is future work, not a restoration of this one.
   const matched = allJobs.filter((job) => {
-    if (bucket !== "all" && job.bucket !== bucket) return false;
     if (source !== "all" && job.source !== source) return false;
     if (query) {
       const haystack = `${job.company} ${job.title}`.toLowerCase();
@@ -114,7 +118,6 @@ searchInput.addEventListener("input", () => {
   debounceTimer = setTimeout(applyFilters, DEBOUNCE_MS);
 });
 
-bucketFilter.addEventListener("change", applyFilters);
 sourceFilter.addEventListener("change", applyFilters);
 sortBy.addEventListener("change", applyFilters);
 
