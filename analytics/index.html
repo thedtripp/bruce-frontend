@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bruce Job Board -- Analytics</title>
+  <link rel="icon" type="image/png" href="../img/favicon.png" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+</head>
+<body>
+  <header>
+    <p class="nav-links"><a href="../index.html">&larr; Bruce Job Board</a></p>
+    <div class="title-row">
+      <img src="../img/bruce_logo.png" alt="Bruce logo" id="logo" />
+      <h1>Job Posting Analytics</h1>
+    </div>
+    <p>Aggregate patterns across every posting Bruce has seen on the public board --
+      not filtered by anyone's personal title or location preferences.</p>
+  </header>
+
+  <section>
+    <h2>When jobs get posted</h2>
+    <p>Postings by day of week and hour (UTC), summed since this page started collecting data.</p>
+    <div class="controls">
+      <select id="heatmap-source-filter" aria-label="Filter heatmap by source">
+        <option value="all">All sources</option>
+        <option value="greenhouse">Greenhouse</option>
+        <option value="lever">Lever</option>
+        <option value="ashby">Ashby</option>
+      </select>
+    </div>
+    <div id="heatmap-status">Loading...</div>
+    <div class="heatmap-wrap">
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where jobs appear, over time</h2>
+    <p>Postings from the last 30 days, plotted where they appeared and animated in the
+      order they were originally posted.</p>
+    <div id="map-status">Loading...</div>
+    <div id="map"></div>
+    <div class="timeline-controls">
+      <button id="play-btn" type="button">Play</button>
+      <input type="range" id="time-slider" min="0" max="1000" value="1000" aria-label="Timeline position" />
+      <span id="time-readout"></span>
+    </div>
+  </section>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="../js/analytics.js"></script>
+</body>
+</html>

@@ -111,3 +111,79 @@ tr:hover {
 a {
   color: #0969da;
 }
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0 0;
+}
+
+section {
+  margin: 2rem 0;
+}
+
+section h2 {
+  margin-bottom: 0.25rem;
+}
+
+section > p {
+  color: gray;
+  margin-top: 0;
+}
+
+.heatmap-wrap {
+  overflow-x: auto;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: 3rem repeat(24, minmax(1.1rem, 1fr));
+  gap: 2px;
+  font-size: 0.7rem;
+  min-width: 640px;
+}
+
+.heatmap .hm-corner {
+  min-width: 3rem;
+}
+
+.heatmap .hm-hour-label {
+  text-align: center;
+  color: gray;
+}
+
+.heatmap .hm-label {
+  text-align: right;
+  padding-right: 0.5rem;
+  color: gray;
+  align-self: center;
+}
+
+.heatmap .hm-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+#map {
+  height: 420px;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 2rem;
+}
+
+.timeline-controls input[type="range"] {
+  flex: 1;
+}
+
+#time-readout {
+  color: gray;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
