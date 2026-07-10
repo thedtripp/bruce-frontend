@@ -150,6 +150,7 @@ section > p {
 .heatmap .hm-hour-label {
   text-align: center;
   color: gray;
+  font-size: 0.62rem;
 }
 
 .heatmap .hm-label {
@@ -163,6 +164,47 @@ section > p {
   aspect-ratio: 1;
   border-radius: 2px;
   background: rgba(127, 127, 127, 0.08);
+  cursor: default;
+}
+
+.hm-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: gray;
+  margin: 0.5rem 0;
+}
+
+.hm-legend-bar {
+  width: 120px;
+  height: 0.75rem;
+  border-radius: 3px;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+}
+
+.hm-legend-caption {
+  margin-left: 0.25rem;
+}
+
+.hm-tooltip {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.map-popup-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  max-height: 140px;
+  overflow-y: auto;
 }
 
 #map {

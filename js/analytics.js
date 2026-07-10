@@ -20,6 +20,8 @@ function escapeHtml(value) {
 const heatmapEl = document.getElementById("heatmap");
 const heatmapStatusEl = document.getElementById("heatmap-status");
 const heatmapSourceFilter = document.getElementById("heatmap-source-filter");
+const heatmapTooltipEl = document.getElementById("hm-tooltip");
+const legendEl = document.getElementById("hm-legend");
 
 let histogram = {};
 
@@ -46,23 +48,41 @@ function aggregateHistogram(source) {
   return totals;
 }
 
+// Shared by both cell shading and the legend gradient, so the legend's
+// endpoints always mean exactly what the cells are showing.
+function alphaForCount(count, max) {
+  if (count === 0) return 0.08;
+  return 0.15 + (count / max) * 0.75;
+}
+
+function renderLegend(max) {
+  const minColor = `rgba(9,105,218,${alphaForCount(0, max)})`;
+  const maxColor = `rgba(9,105,218,${alphaForCount(max, max)})`;
+  legendEl.innerHTML = `
+    <span>0</span>
+    <span class="hm-legend-bar" style="background: linear-gradient(to right, ${minColor}, ${maxColor})"></span>
+    <span>${max}</span>
+    <span class="hm-legend-caption">postings</span>
+  `;
+}
+
 function renderHeatmap() {
   const totals = aggregateHistogram(heatmapSourceFilter.value);
   const max = Math.max(1, ...DAYS.flatMap((day) => totals[day.key]));
+  renderLegend(max);
 
   const cells = ['<div class="hm-corner"></div>'];
   HOURS.forEach((hour) => {
-    cells.push(`<div class="hm-hour-label">${hour % 3 === 0 ? hour : ""}</div>`);
+    cells.push(`<div class="hm-hour-label">${hour}</div>`);
   });
   DAYS.forEach((day) => {
     cells.push(`<div class="hm-label">${day.label}</div>`);
     HOURS.forEach((hour) => {
       const count = totals[day.key][hour];
-      const intensity = count / max;
-      const alpha = count === 0 ? 0.08 : 0.15 + intensity * 0.75;
-      const title = `${day.label} ${String(hour).padStart(2, "0")}:00 UTC -- ${count} posting(s)`;
+      const alpha = alphaForCount(count, max);
+      const tooltip = `${day.label} ${String(hour).padStart(2, "0")}:00 UTC -- ${count} posting(s)`;
       cells.push(
-        `<div class="hm-cell" style="background: rgba(9,105,218,${alpha.toFixed(2)})" title="${escapeHtml(title)}"></div>`
+        `<div class="hm-cell" style="background: rgba(9,105,218,${alpha.toFixed(2)})" data-tooltip="${escapeHtml(tooltip)}"></div>`
       );
     });
   });
@@ -70,6 +90,21 @@ function renderHeatmap() {
 }
 
 heatmapSourceFilter.addEventListener("change", renderHeatmap);
+
+heatmapEl.addEventListener("mousemove", (e) => {
+  const cell = e.target.closest(".hm-cell");
+  if (!cell) {
+    heatmapTooltipEl.hidden = true;
+    return;
+  }
+  heatmapTooltipEl.hidden = false;
+  heatmapTooltipEl.textContent = cell.dataset.tooltip;
+  heatmapTooltipEl.style.left = `${e.clientX + 12}px`;
+  heatmapTooltipEl.style.top = `${e.clientY + 12}px`;
+});
+heatmapEl.addEventListener("mouseleave", () => {
+  heatmapTooltipEl.hidden = true;
+});
 
 fetch("../data/posting_time_histogram.json")
   .then((res) => {
@@ -100,8 +135,48 @@ const SLIDER_MAX = 1000;
 const PLAY_DURATION_MS = 20000;
 const PLAY_STEP_MS = 200;
 
+// Circle sizing: grows with how many postings have accumulated at a
+// location by the current point in the timeline, capped so a single busy
+// spot (e.g. "Remote - US") can't dominate the map. sqrt growth means
+// radius roughly tracks area, not raw count, so it doesn't runway.
+const MIN_RADIUS = 5;
+const MAX_RADIUS = 22;
+const MAX_FILL_OPACITY = 0.55;
+const MIN_FILL_OPACITY = 0.12;
+
+function radiusForCount(count) {
+  return Math.min(MAX_RADIUS, MIN_RADIUS + Math.sqrt(Math.max(0, count - 1)) * 4);
+}
+
+// Larger circles get more transparent fill so they don't fully occlude
+// smaller circles nearby -- only the (always solid) border marks their
+// true edge.
+function fillOpacityForRadius(radius) {
+  const t = (radius - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS);
+  return MAX_FILL_OPACITY - t * (MAX_FILL_OPACITY - MIN_FILL_OPACITY);
+}
+
+function popupContent(location, visiblePostings) {
+  const maxLinks = 8;
+  const shown = visiblePostings.slice(-maxLinks);
+  const items = shown
+    .map(
+      (p) =>
+        `<li>${escapeHtml(p.company)} -- <a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer">view</a></li>`
+    )
+    .join("");
+  const more =
+    visiblePostings.length > maxLinks ? `<li>+${visiblePostings.length - maxLinks} more</li>` : "";
+  const count = visiblePostings.length;
+  return (
+    `<strong>${escapeHtml(location)}</strong> (${count} posting${count === 1 ? "" : "s"})` +
+    `<ul class="map-popup-list">${items}${more}</ul>`
+  );
+}
+
 let map, markerLayer;
 let postings = [];
+let locationGroups = [];
 let minTime, maxTime;
 let playTimer = null;
 
@@ -118,24 +193,43 @@ function timeAtSlider(value) {
   return minTime + (value / SLIDER_MAX) * (maxTime - minTime);
 }
 
+// Postings at (nearly) the same coordinates -- typically the same
+// location string, geocoded once and cached -- share one circle whose
+// size reflects how many have accumulated there, rather than one circle
+// per posting stacking up illegibly.
+function groupByLocation(allPostings) {
+  const groups = new Map();
+  allPostings.forEach((p) => {
+    const key = `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
+    if (!groups.has(key)) {
+      groups.set(key, { lat: p.lat, lng: p.lng, location: p.location, postings: [] });
+    }
+    groups.get(key).postings.push(p);
+  });
+  return Array.from(groups.values());
+}
+
 function renderMapAt(currentTime) {
   markerLayer.clearLayers();
-  const visible = postings.filter((p) => p.time <= currentTime);
-  visible.forEach((p) => {
-    const marker = L.circleMarker([p.lat, p.lng], {
-      radius: 5,
+  let totalVisible = 0;
+  locationGroups.forEach((group) => {
+    const visiblePostings = group.postings.filter((p) => p.time <= currentTime);
+    if (visiblePostings.length === 0) return;
+    totalVisible += visiblePostings.length;
+
+    const radius = radiusForCount(visiblePostings.length);
+    const marker = L.circleMarker([group.lat, group.lng], {
+      radius,
       color: "#0969da",
+      weight: 2,
+      opacity: 1,
       fillColor: "#0969da",
-      fillOpacity: 0.7,
-      weight: 1,
+      fillOpacity: fillOpacityForRadius(radius),
     });
-    marker.bindPopup(
-      `<strong>${escapeHtml(p.company)}</strong><br>${escapeHtml(p.location)}<br>` +
-        `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer">View posting</a>`
-    );
+    marker.bindPopup(popupContent(group.location, visiblePostings));
     marker.addTo(markerLayer);
   });
-  timeReadout.textContent = `${new Date(currentTime).toLocaleString()} -- ${visible.length} posting(s)`;
+  timeReadout.textContent = `${new Date(currentTime).toLocaleString()} -- ${totalVisible} posting(s)`;
 }
 
 function stopPlaying() {
@@ -216,6 +310,7 @@ fetch("../data/postings_raw.jsonl")
       // Avoid a zero-length timeline when every posting shares one timestamp.
       maxTime = minTime + 1;
     }
+    locationGroups = groupByLocation(postings);
 
     mapStatusEl.textContent = "";
     initMap();
