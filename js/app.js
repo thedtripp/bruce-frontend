@@ -99,13 +99,12 @@ function renderPage() {
       <td>${escapeHtml(job.location)}</td>
       <td>${escapeHtml(job.source)}</td>
       <td>${escapeHtml(formatTimeAgo(job.posted_at))}</td>
-      <td>${escapeHtml((job.matched_keywords || []).join(", "))}</td>
       <td><a href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer">View</a></td>
     </tr>`
     )
     .join("");
 
-  tbody.innerHTML = rows || '<tr><td colspan="7">No matching jobs.</td></tr>';
+  tbody.innerHTML = rows || '<tr><td colspan="6">No matching jobs.</td></tr>';
   statusEl.textContent = `${filteredJobs.length} matching job(s) of ${allJobs.length} total`;
   pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
   prevBtn.disabled = currentPage <= 1;
