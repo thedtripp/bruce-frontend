@@ -65,3 +65,10 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   refresh, so check that the static `jobs.json` fetch + client-side
   filtering approach (and GitHub Pages hosting) still holds up before
   widening the window, rather than assuming it scales for free.
+- **TODO (not started, 2026-07-11): review for dead code in `js/app.js`/
+  `css/style.css`, and confirm the current flat structure
+  (`css/`/`js/`/`img/`/`data/`/`analytics/`) still makes sense.** No
+  Python/build step here, so this is scoped to the frontend files
+  themselves -- worth a pass given how much has landed this session
+  (matched-keywords column removal, the analytics page, the two filtering
+  TODOs above) without a cleanup pass in between.
