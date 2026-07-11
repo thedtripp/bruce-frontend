@@ -12,19 +12,27 @@ bruce-bot's `refresh_job_board.yml` workflow. `index.html`/`style.css`/
 change there (`publish_frontend.yml`), independent of that data-refresh
 cadence.
 
+**Every mirrored file (`index.html`, `css/style.css`, `js/app.js`,
+`js/analytics.js`, `analytics/index.html`) has a "generated, do not edit
+here" header comment for exactly this reason: a manual edit made directly
+in this repo instead of in bruce-bot's `docs/` will silently get
+overwritten by the next publish run.** This happened for real on
+2026-07-08 (a logo/CSS fix); see this repo's `CLAUDE.md` for the
+incident and how to avoid it. `img/bruce_logo.png`/`img/favicon.png` are
+mirrored the same way but can't carry a text header (binary) -- replace
+them at the source (bruce-bot's `docs/img/`) too.
+
 Live site: served via GitHub Pages from this repo's `main` branch.
 
 ## TODO
 
-- **Remove scoring from the public board.** `jobs.json`'s `score` field
-  and the "Matched Keywords" column (`js/app.js`) are both derived from
-  the site owner's personal resume keyword profile
-  (`SKILL_KEYWORDS` in bruce-bot's `daily_report.py`) -- they rank/annotate
-  jobs by fit to one specific person, which doesn't make sense on a
-  public-facing board. Drop the "Matched Keywords" column and stop
-  surfacing `score` in the UI (and ideally stop shipping those fields in
-  `jobs.json` at all, once bruce-bot's report email no longer needs them
-  rendered the same way).
+- ~~**Remove scoring from the public board.**~~ Partially done
+  (2026-07-11): the "Matched Keywords" column and `jobs.json`'s
+  `matched_keywords` field are both gone (both were derived from the
+  site owner's personal `config/skill_keywords.txt`, which doesn't mean
+  anything to a visitor). `jobs.json`'s `score` field still ships,
+  deliberately deferred -- nothing in the frontend renders it today, so
+  there's no active bug, just unused data.
 - **Add job-category filtering.** A user should be able to search e.g.
   "doctor" and get roles like "Physician." Plain substring match on
   `company`/`title` (today's `applyFilters()` in `js/app.js`) won't catch
