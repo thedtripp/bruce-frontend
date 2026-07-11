@@ -72,3 +72,12 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   themselves -- worth a pass given how much has landed this session
   (matched-keywords column removal, the analytics page, the two filtering
   TODOs above) without a cleanup pass in between.
+- **TODO (not started, 2026-07-11): hover tooltip showing a keyword's
+  definition, once keyword matching/highlighting ships on this board.**
+  Depends entirely on bruce-bot's keyword/skill-search TODO (not built
+  yet -- see its README) actually surfacing which keywords matched a
+  posting in the frontend first; this is purely the display layer on top
+  of that. Would consume the same per-keyword context data proposed as a
+  bruce-bot TODO (what a term is/does, not just that it exists) rather
+  than needing its own separate definition source. Not designed
+  further -- no UI/data-fetching approach decided, just the idea.
