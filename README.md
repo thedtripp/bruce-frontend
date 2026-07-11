@@ -39,6 +39,25 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   that -- needs a small keyword/synonym dictionary mapping search terms to
   related job-title terms (e.g. doctor -> physician, MD, medical
   officer), checked in addition to the literal substring match.
+- **TODO (not started, 2026-07-11): an onboarding flow that asks a
+  first-time visitor what kind of job/career they're going into, then
+  tailors which postings get shown.** Aimed at making this a better demo
+  project in its own right, not just a personal data mirror -- a visitor
+  picking "nursing" or "software engineering" up front and seeing a
+  filtered board is a much stronger portfolio showcase than the current
+  one-size-fits-all list. Related to, but distinct from, the
+  job-category-filtering item above: that one improves the search box for
+  a visitor who already knows what to type; this is an upfront choice
+  that reshapes the default view before they search at all. How the
+  chosen career maps to which postings get included/excluded is
+  undecided -- could be rule-based (keyword/title matching per career,
+  same spirit as the synonym dictionary above), AI-based, or a set of
+  predefined profiles -- needs real design before starting. Also
+  undecided: where the choice lives (a URL param, so a filtered view is
+  shareable/bookmarkable? `localStorage`, so it persists across visits?),
+  and whether it reshapes what's fetched from `jobs.json` or stays a
+  purely client-side filter over the same unfiltered data every visitor
+  already gets today.
 - ~~**Document the freshness window, and note room to expand it.**~~ Done
   (2026-07-09): the header now states the 72h rolling window explicitly.
   Still open: expanding to a 7-day or 30-day window is a reasonable
