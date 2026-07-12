@@ -72,12 +72,22 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   themselves -- worth a pass given how much has landed this session
   (matched-keywords column removal, the analytics page, the two filtering
   TODOs above) without a cleanup pass in between.
-- **TODO (not started, 2026-07-11): hover tooltip showing a keyword's
-  definition, once keyword matching/highlighting ships on this board.**
-  Depends entirely on bruce-bot's keyword/skill-search TODO (not built
-  yet -- see its README) actually surfacing which keywords matched a
-  posting in the frontend first; this is purely the display layer on top
-  of that. Would consume the same per-keyword context data proposed as a
-  bruce-bot TODO (what a term is/does, not just that it exists) rather
-  than needing its own separate definition source. Not designed
-  further -- no UI/data-fetching approach decided, just the idea.
+- ~~**Hover tooltip showing a keyword's definition, once keyword
+  matching/highlighting ships on this board.**~~ Shipped: matched
+  keywords render per job (`job.matched_public_keywords`), each as a
+  `.keyword-pill` with a native `title` attribute sourced from
+  `data/public_keywords_metadata.jsonl`. In progress (2026-07-12):
+  restyling the pill (was a fully bordered/circled shape, moving to a
+  softer tag look with no border), replacing the native tooltip with a
+  styled custom one (native `title` tooltips can't be restyled -- no
+  font-size/color/layout control at all), and investigating load-time
+  (the sequential `jobs.json` -> keyword-metadata fetch chain in
+  `js/app.js` looks like the main cost, not the render-time page size,
+  which is already capped at `PAGE_SIZE = 100`).
+- **TODO (not started, 2026-07-12): consider a link to each company's
+  website or Wikipedia page, alongside the existing per-posting link.**
+  Possibly redundant -- every job row already links out to the real
+  posting, which itself links to the company -- so worth confirming this
+  adds real value (e.g. a quick "who is this company" check without
+  leaving the board) before building it, not just adding a link because
+  it's easy to add.
