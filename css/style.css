@@ -88,6 +88,11 @@ td {
   vertical-align: top;
 }
 
+td.job-keywords {
+  max-width: 320px;
+  word-break: break-word;
+}
+
 th {
   position: sticky;
   top: 0;

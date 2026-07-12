@@ -26,6 +26,11 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
+function formatMatchedKeywords(keywords) {
+  if (!Array.isArray(keywords) || keywords.length === 0) return "—";
+  return keywords.join(", ");
+}
+
 // job.time_since_posted is a string baked in at snapshot-generation time
 // ("2h ago") -- accurate then, but never recomputed, so it silently goes
 // stale the longer it's been since the last refresh or since this tab was
@@ -101,6 +106,7 @@ function renderPage() {
     <tr>
       <td>${escapeHtml(job.company)}</td>
       <td>${escapeHtml(job.title)}</td>
+      <td class="job-keywords">${escapeHtml(formatMatchedKeywords(job.matched_public_keywords))}</td>
       <td>${escapeHtml(job.location)}</td>
       <td>${escapeHtml(job.source)}</td>
       <td>${escapeHtml(formatTimeAgo(job.posted_at))}</td>
@@ -109,7 +115,7 @@ function renderPage() {
     )
     .join("");
 
-  tbody.innerHTML = rows || '<tr><td colspan="6">No matching jobs.</td></tr>';
+  tbody.innerHTML = rows || '<tr><td colspan="7">No matching jobs.</td></tr>';
   statusEl.textContent = `${filteredJobs.length} matching job(s) of ${allJobs.length} total`;
   pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
   prevBtn.disabled = currentPage <= 1;
