@@ -53,6 +53,12 @@ function loadPublicKeywordDefinitions() {
     });
 }
 
+// data-tooltip (read by the .keyword-pill::after CSS rule below), not the
+// native title attribute -- title tooltips are OS-rendered and can't be
+// restyled at all (no font-size/color/layout control), which is exactly
+// why the definition text was small and plain before. tabindex/aria-label
+// give keyboard/screen-reader users an equivalent, since the generated
+// ::after content itself isn't reliably exposed to assistive tech.
 function formatMatchedKeywords(keywords) {
   if (!Array.isArray(keywords) || keywords.length === 0) return "—";
   return keywords
@@ -61,7 +67,8 @@ function formatMatchedKeywords(keywords) {
       if (!definition) {
         return `<span class="keyword-pill">${escapeHtml(keyword)}</span>`;
       }
-      return `<span class="keyword-pill" title="${escapeHtml(definition)}">${escapeHtml(keyword)}</span>`;
+      const label = escapeHtml(`${keyword}: ${definition}`);
+      return `<span class="keyword-pill" tabindex="0" aria-label="${label}" data-tooltip="${escapeHtml(definition)}">${escapeHtml(keyword)}</span>`;
     })
     .join("");
 }
@@ -180,17 +187,30 @@ nextBtn.addEventListener("click", () => {
 // re-filtering/re-sorting isn't needed, just refreshing the displayed age.
 setInterval(renderPage, 60000);
 
-fetch("data/jobs.json")
-  .then((res) => res.json())
-  .then((data) => {
+// jobs.json and the keyword-metadata file used to be fetched sequentially
+// (keyword metadata only starting *after* jobs.json fully resolved),
+// which meant the page's first render waited for both fetches' full
+// duration added together. loadPublicKeywordDefinitions() already
+// swallows its own errors (falls back to no definitions rather than
+// rejecting), so running both in parallel here can't change what happens
+// on a keyword-metadata failure -- only jobs.json failing still fails
+// the whole load, same as before.
+Promise.all([
+  fetch("data/jobs.json").then((res) => {
+    if (!res.ok) {
+      throw new Error(`Failed to load jobs.json: ${res.status}`);
+    }
+    return res.json();
+  }),
+  loadPublicKeywordDefinitions(),
+])
+  .then(([data]) => {
     allJobs = data.jobs;
     if (data.generated_at) {
       const generated = new Date(data.generated_at);
       lastUpdatedEl.textContent = `Data last updated: ${generated.toLocaleString()}`;
     }
-    return loadPublicKeywordDefinitions().finally(() => {
-      applyFilters();
-    });
+    applyFilters();
   })
   .catch((err) => {
     statusEl.textContent = "Failed to load job data.";
