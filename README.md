@@ -73,17 +73,25 @@ Live site: served via GitHub Pages from this repo's `main` branch.
   (matched-keywords column removal, the analytics page, the two filtering
   TODOs above) without a cleanup pass in between.
 - ~~**Hover tooltip showing a keyword's definition, once keyword
-  matching/highlighting ships on this board.**~~ Shipped: matched
-  keywords render per job (`job.matched_public_keywords`), each as a
-  `.keyword-pill` with a native `title` attribute sourced from
-  `data/public_keywords_metadata.jsonl`. In progress (2026-07-12):
-  restyling the pill (was a fully bordered/circled shape, moving to a
-  softer tag look with no border), replacing the native tooltip with a
-  styled custom one (native `title` tooltips can't be restyled -- no
-  font-size/color/layout control at all), and investigating load-time
-  (the sequential `jobs.json` -> keyword-metadata fetch chain in
-  `js/app.js` looks like the main cost, not the render-time page size,
-  which is already capped at `PAGE_SIZE = 100`).
+  matching/highlighting ships on this board.**~~ Shipped and polished
+  (2026-07-12): matched keywords render per job
+  (`job.matched_public_keywords`) as `.keyword-pill` chips. Restyled from
+  a fully bordered/circled pill to a softer tag (light background tint,
+  no border); replaced the native `title` tooltip (can't be restyled at
+  all -- no font-size/color/layout control) with a custom styled one;
+  fixed `jobs.json`/keyword-metadata fetching to run in parallel instead
+  of sequentially (the main load-time cost, not render-time page size,
+  which is already capped at `PAGE_SIZE = 100`); fixed a staggered/
+  doubled row-divider line caused by `display: flex` directly on a `<td>`
+  (moved to an inner wrapper div instead).
+- **TODO (not started, 2026-07-12): limit how many keywords show per job
+  listing, expanding to the full list on hover/click.** Some postings
+  match a lot of keywords (a real one hit 13), wrapping the row across
+  several lines -- capping the visible count (e.g. show 4-5 plus a "+N
+  more") and revealing the rest on interaction would keep rows visually
+  compact. Just an idea -- interaction model (hover vs click), the cutoff
+  count, and how it interacts with the existing per-keyword tooltip are
+  all undecided.
 - **TODO (not started, 2026-07-12): consider a link to each company's
   website or Wikipedia page, alongside the existing per-posting link.**
   Possibly redundant -- every job row already links out to the real
