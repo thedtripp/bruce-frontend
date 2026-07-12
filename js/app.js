@@ -148,7 +148,7 @@ function renderPage() {
     <tr>
       <td>${escapeHtml(job.company)}</td>
       <td>${escapeHtml(job.title)}</td>
-      <td class="job-keywords">${formatMatchedKeywords(job.matched_public_keywords)}</td>
+      <td class="job-keywords"><div class="job-keywords-inner">${formatMatchedKeywords(job.matched_public_keywords)}</div></td>
       <td>${escapeHtml(job.location)}</td>
       <td>${escapeHtml(job.source)}</td>
       <td>${escapeHtml(formatTimeAgo(job.posted_at))}</td>

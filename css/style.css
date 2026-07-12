@@ -88,7 +88,13 @@ td {
   vertical-align: top;
 }
 
-td.job-keywords {
+/* .job-keywords-inner, not display:flex on the <td> itself: a <td> with
+   display:flex is pulled out of normal table-cell layout, which breaks
+   how its border-bottom aligns with sibling cells once this cell wraps
+   onto multiple lines (the pills) but the others don't -- showed up as a
+   staggered/doubled row-divider line. Keeping the <td> a plain table
+   cell and putting the flex layout on a wrapper div inside it instead. */
+.job-keywords-inner {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
