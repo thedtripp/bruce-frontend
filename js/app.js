@@ -20,15 +20,50 @@ const pageInfo = document.getElementById("page-info");
 const prevBtn = document.getElementById("prev-page");
 const nextBtn = document.getElementById("next-page");
 
+const publicKeywordDefinitions = new Map();
+
 function escapeHtml(value) {
   const div = document.createElement("div");
   div.textContent = value == null ? "" : String(value);
   return div.innerHTML;
 }
 
+function loadPublicKeywordDefinitions() {
+  return fetch("data/public_keywords_metadata.jsonl")
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to load public keyword metadata: ${res.status}`);
+      }
+      return res.text();
+    })
+    .then((text) => {
+      publicKeywordDefinitions.clear();
+      for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const record = JSON.parse(trimmed);
+        if (record.term) {
+          publicKeywordDefinitions.set(record.term, record.definition || "");
+        }
+      }
+    })
+    .catch((err) => {
+      console.warn(err);
+      publicKeywordDefinitions.clear();
+    });
+}
+
 function formatMatchedKeywords(keywords) {
   if (!Array.isArray(keywords) || keywords.length === 0) return "—";
-  return keywords.join(", ");
+  return keywords
+    .map((keyword) => {
+      const definition = publicKeywordDefinitions.get(keyword);
+      if (!definition) {
+        return `<span class="keyword-pill">${escapeHtml(keyword)}</span>`;
+      }
+      return `<span class="keyword-pill" title="${escapeHtml(definition)}">${escapeHtml(keyword)}</span>`;
+    })
+    .join("");
 }
 
 // job.time_since_posted is a string baked in at snapshot-generation time
@@ -106,7 +141,7 @@ function renderPage() {
     <tr>
       <td>${escapeHtml(job.company)}</td>
       <td>${escapeHtml(job.title)}</td>
-      <td class="job-keywords">${escapeHtml(formatMatchedKeywords(job.matched_public_keywords))}</td>
+      <td class="job-keywords">${formatMatchedKeywords(job.matched_public_keywords)}</td>
       <td>${escapeHtml(job.location)}</td>
       <td>${escapeHtml(job.source)}</td>
       <td>${escapeHtml(formatTimeAgo(job.posted_at))}</td>
@@ -153,7 +188,9 @@ fetch("data/jobs.json")
       const generated = new Date(data.generated_at);
       lastUpdatedEl.textContent = `Data last updated: ${generated.toLocaleString()}`;
     }
-    applyFilters();
+    return loadPublicKeywordDefinitions().finally(() => {
+      applyFilters();
+    });
   })
   .catch((err) => {
     statusEl.textContent = "Failed to load job data.";
