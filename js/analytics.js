@@ -81,19 +81,36 @@ function toLocalTime(totalsUtc) {
   return local;
 }
 
+// Hue of the site's accent blue (#0969da), held fixed, at full (100%)
+// saturation, also held fixed -- only lightness ramps with count, clamped
+// to 10%-90% rather than the full 0%-100% range (true black/white
+// endpoints read as too high-contrast against the in-between cells).
+// Ramping lightness alone at a constant hue/saturation naturally passes
+// through a dark, muted blue, the fully-saturated accent blue (at the
+// midpoint), and a pale near-white: the color is always "blue", just
+// darkened or brightened, rather than two unrelated colors stitched
+// together. Opaque, so (unlike alpha-over-background) it renders
+// identically in light and dark mode.
+const HEATMAP_HUE = 212;
+const HEATMAP_SATURATION = 100;
+const HEATMAP_MIN_LIGHTNESS = 10;
+const HEATMAP_MAX_LIGHTNESS = 90;
+
 // Shared by both cell shading and the legend gradient, so the legend's
 // endpoints always mean exactly what the cells are showing.
-function alphaForCount(count, max) {
-  if (count === 0) return 0.08;
-  return 0.15 + (count / max) * 0.75;
+function colorForCount(count, max) {
+  const t = max > 0 ? count / max : 0;
+  const lightness = HEATMAP_MIN_LIGHTNESS + t * (HEATMAP_MAX_LIGHTNESS - HEATMAP_MIN_LIGHTNESS);
+  return `hsl(${HEATMAP_HUE}, ${HEATMAP_SATURATION}%, ${lightness.toFixed(1)}%)`;
 }
 
 function renderLegend(max) {
-  const minColor = `rgba(9,105,218,${alphaForCount(0, max)})`;
-  const maxColor = `rgba(9,105,218,${alphaForCount(max, max)})`;
+  const black = colorForCount(0, max);
+  const blue = colorForCount(max / 2, max);
+  const white = colorForCount(max, max);
   legendEl.innerHTML = `
     <span>0</span>
-    <span class="hm-legend-bar" style="background: linear-gradient(to right, ${minColor}, ${maxColor})"></span>
+    <span class="hm-legend-bar" style="background: linear-gradient(to right, ${black}, ${blue}, ${white})"></span>
     <span>${max}</span>
     <span class="hm-legend-caption">postings</span>
   `;
@@ -112,10 +129,10 @@ function renderHeatmap() {
     cells.push(`<div class="hm-label">${day.label}</div>`);
     HOURS.forEach((hour) => {
       const count = totals[day.key][hour];
-      const alpha = alphaForCount(count, max);
+      const color = colorForCount(count, max);
       const tooltip = `${day.label} ${String(hour).padStart(2, "0")}:00 (your local time) -- ${count} posting(s)`;
       cells.push(
-        `<div class="hm-cell" style="background: rgba(9,105,218,${alpha.toFixed(2)})" data-tooltip="${escapeHtml(tooltip)}"></div>`
+        `<div class="hm-cell" style="background: ${color}" data-tooltip="${escapeHtml(tooltip)}"></div>`
       );
     });
   });
