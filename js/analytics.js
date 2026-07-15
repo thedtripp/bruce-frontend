@@ -53,6 +53,34 @@ function aggregateHistogram(source) {
   return totals;
 }
 
+// Server-side buckets are stored in UTC (see common/posting_analytics.py --
+// deliberately not pre-localized, so the same data works for any viewer).
+// Rotate the whole day/hour grid into the viewer's own timezone here, at
+// render time, rather than shipping per-viewer buckets from the server.
+// Treats the week as a circular 168-hour timeline so a shift can carry a
+// bucket into the adjacent day. Offset is rounded to the nearest whole
+// hour -- exact for the US, an approximation for the handful of timezones
+// with a 30/45-minute offset, which is an acceptable tradeoff for a
+// day/hour heatmap.
+function localOffsetHours() {
+  return Math.round(-new Date().getTimezoneOffset() / 60);
+}
+
+function toLocalTime(totalsUtc) {
+  const offset = localOffsetHours();
+  const local = {};
+  DAYS.forEach((day) => {
+    local[day.key] = new Array(24).fill(0);
+  });
+  DAYS.forEach((day, dayIndex) => {
+    totalsUtc[day.key].forEach((count, hour) => {
+      const flat = (((dayIndex * 24 + hour + offset) % 168) + 168) % 168;
+      local[DAYS[Math.floor(flat / 24)].key][flat % 24] += count;
+    });
+  });
+  return local;
+}
+
 // Shared by both cell shading and the legend gradient, so the legend's
 // endpoints always mean exactly what the cells are showing.
 function alphaForCount(count, max) {
@@ -72,7 +100,7 @@ function renderLegend(max) {
 }
 
 function renderHeatmap() {
-  const totals = aggregateHistogram(heatmapSourceFilter.value);
+  const totals = toLocalTime(aggregateHistogram(heatmapSourceFilter.value));
   const max = Math.max(1, ...DAYS.flatMap((day) => totals[day.key]));
   renderLegend(max);
 
@@ -85,7 +113,7 @@ function renderHeatmap() {
     HOURS.forEach((hour) => {
       const count = totals[day.key][hour];
       const alpha = alphaForCount(count, max);
-      const tooltip = `${day.label} ${String(hour).padStart(2, "0")}:00 UTC -- ${count} posting(s)`;
+      const tooltip = `${day.label} ${String(hour).padStart(2, "0")}:00 (your local time) -- ${count} posting(s)`;
       cells.push(
         `<div class="hm-cell" style="background: rgba(9,105,218,${alpha.toFixed(2)})" data-tooltip="${escapeHtml(tooltip)}"></div>`
       );
