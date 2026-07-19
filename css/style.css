@@ -5,8 +5,35 @@
  * bruce/CLAUDE.md for why.
  */
 
+/* Base palette vendored from thedtripp/gogh@909cd37 (KAN-10) -- do not
+   hand-edit, re-copy from that repo instead (full file at
+   scripts/vendor/gogh/tokens.css). Only the --bg/--fg/--muted/--border/
+   --surface group is pulled in: gogh's --status-*/--series-*/--diff-*/
+   --tier-* groups belong to workflow-run and resume-tailoring dashboards
+   with concepts this public job-board page doesn't have (no success/
+   failure states, no per-workflow series, no keyword diffing) -- see
+   scripts/vendor/README.md.
+   Previously this page had no explicit body background/color at all,
+   relying on the browser's own `color-scheme: light dark` default
+   styling (effectively a plain black/white swap) -- this is a real,
+   deliberate visual convergence with archie's dashboards, not a no-op. */
 :root {
   color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #666666;
+  --border: #e0e0e0;
+  --surface: #f7f7f8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --fg: #e8e8e8;
+    --muted: #9a9a9a;
+    --border: #2c2f36;
+    --surface: #1b1e24;
+  }
 }
 
 body {
@@ -15,6 +42,8 @@ body {
   margin: 0 auto;
   padding: 1.5rem;
   line-height: 1.4;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 header h1 {
@@ -22,7 +51,7 @@ header h1 {
 }
 
 header p {
-  color: gray;
+  color: var(--muted);
   margin-top: 0;
 }
 
@@ -42,6 +71,9 @@ header p {
   object-fit: contain;
   box-sizing: border-box;
   padding: 0px;
+  /* Fixed white, not var(--bg) -- the PNG's own artwork already bakes in
+     a light gradient backing plate, so it needs a fixed light surface
+     under it in both themes, not one that flips dark. */
   background: white;
   border-radius: 16px;
 }
@@ -66,7 +98,7 @@ header p {
 
 #status {
   margin-bottom: 0.5rem;
-  color: gray;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -84,7 +116,7 @@ th,
 td {
   text-align: left;
   padding: 0.5rem;
-  border-bottom: 1px solid rgba(127, 127, 127, 0.3);
+  border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
 
@@ -152,7 +184,7 @@ td {
 th {
   position: sticky;
   top: 0;
-  background: Canvas;
+  background: var(--bg);
 }
 
 tr:hover {
@@ -195,7 +227,7 @@ section h2 {
 }
 
 section > p {
-  color: gray;
+  color: var(--muted);
   margin-top: 0;
 }
 
@@ -217,14 +249,14 @@ section > p {
 
 .heatmap .hm-hour-label {
   text-align: center;
-  color: gray;
+  color: var(--muted);
   font-size: 0.62rem;
 }
 
 .heatmap .hm-label {
   text-align: right;
   padding-right: 0.5rem;
-  color: gray;
+  color: var(--muted);
   align-self: center;
 }
 
@@ -240,7 +272,7 @@ section > p {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: gray;
+  color: var(--muted);
   margin: 0.5rem 0;
 }
 
@@ -248,7 +280,7 @@ section > p {
   width: 120px;
   height: 0.75rem;
   border-radius: 3px;
-  border: 1px solid rgba(127, 127, 127, 0.3);
+  border: 1px solid var(--border);
 }
 
 .hm-legend-caption {
@@ -259,9 +291,9 @@ section > p {
   position: fixed;
   z-index: 20;
   pointer-events: none;
-  background: Canvas;
-  color: CanvasText;
-  border: 1px solid rgba(127, 127, 127, 0.4);
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.3rem 0.5rem;
   font-size: 0.8rem;
@@ -293,7 +325,7 @@ section > p {
 }
 
 #time-readout {
-  color: gray;
+  color: var(--muted);
   font-size: 0.85rem;
   white-space: nowrap;
 }
