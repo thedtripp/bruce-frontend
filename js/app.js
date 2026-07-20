@@ -16,6 +16,7 @@ const sortBy = document.getElementById("sort-by");
 const tbody = document.getElementById("jobs-body");
 const statusEl = document.getElementById("status");
 const lastUpdatedEl = document.getElementById("last-updated");
+const discoveryLatencyEl = document.getElementById("discovery-latency");
 const pageInfo = document.getElementById("page-info");
 const prevBtn = document.getElementById("prev-page");
 const nextBtn = document.getElementById("next-page");
@@ -50,6 +51,56 @@ function loadPublicKeywordDefinitions() {
     .catch((err) => {
       console.warn(err);
       publicKeywordDefinitions.clear();
+    });
+}
+
+function parseJsonl(text) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
+function median(sortedValues) {
+  const mid = Math.floor(sortedValues.length / 2);
+  return sortedValues.length % 2 !== 0
+    ? sortedValues[mid]
+    : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
+}
+
+// Mirrors common/posting_analytics.py's time_to_surface_stats() exactly --
+// same source data (postings_raw.jsonl, already public), same delta
+// definition (observed_at - first_published, in hours), same clock-skew
+// guard -- so the number shown here always matches what the pipeline
+// itself would report, computed client-side instead of needing a new
+// published stats file.
+function loadDiscoveryLatencyStat() {
+  return fetch("data/postings_raw.jsonl")
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to load postings_raw.jsonl: ${res.status}`);
+      }
+      return res.text();
+    })
+    .then((text) => {
+      const deltasHours = parseJsonl(text)
+        .filter((r) => r.first_published && r.observed_at)
+        .map((r) => (new Date(r.observed_at) - new Date(r.first_published)) / 3600000)
+        .filter((hours) => Number.isFinite(hours) && hours >= 0);
+
+      if (deltasHours.length === 0) return;
+
+      deltasHours.sort((a, b) => a - b);
+      const meanHours = deltasHours.reduce((sum, h) => sum + h, 0) / deltasHours.length;
+      const medianHours = median(deltasHours);
+
+      discoveryLatencyEl.textContent =
+        `Jobs surface in a median of ${medianHours.toFixed(1)} hours ` +
+        `(mean ${meanHours.toFixed(1)}, n=${deltasHours.length}).`;
+    })
+    .catch((err) => {
+      console.warn(err);
     });
 }
 
@@ -190,11 +241,12 @@ setInterval(renderPage, 60000);
 // jobs.json and the keyword-metadata file used to be fetched sequentially
 // (keyword metadata only starting *after* jobs.json fully resolved),
 // which meant the page's first render waited for both fetches' full
-// duration added together. loadPublicKeywordDefinitions() already
-// swallows its own errors (falls back to no definitions rather than
-// rejecting), so running both in parallel here can't change what happens
-// on a keyword-metadata failure -- only jobs.json failing still fails
-// the whole load, same as before.
+// duration added together. loadPublicKeywordDefinitions() and
+// loadDiscoveryLatencyStat() both already swallow their own errors
+// (fall back to no definitions / a blank stat line rather than
+// rejecting), so running all three in parallel here can't change what
+// happens on either of their failures -- only jobs.json failing still
+// fails the whole load, same as before.
 Promise.all([
   fetch("data/jobs.json").then((res) => {
     if (!res.ok) {
@@ -203,6 +255,7 @@ Promise.all([
     return res.json();
   }),
   loadPublicKeywordDefinitions(),
+  loadDiscoveryLatencyStat(),
 ])
   .then(([data]) => {
     allJobs = data.jobs;
