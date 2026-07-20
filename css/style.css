@@ -267,6 +267,20 @@ section > p {
   cursor: default;
 }
 
+/* KAN-48: marks the columns matching daily_report.yml's fetch schedule
+   (see analytics.js's SCRAPE_RUN_UTC_HOURS) so posting-time vs.
+   scrape-time gap is visible directly instead of inferred. #0969da is
+   this page's existing accent literal, not a gogh token -- same
+   "no brand-accent concept in gogh" reasoning as the rest of this file. */
+.heatmap .hm-hour-label--scrape-run {
+  color: #0969da;
+  font-weight: 700;
+}
+
+.heatmap .hm-cell--scrape-run {
+  box-shadow: inset 0 0 0 1px #0969da;
+}
+
 .hm-legend {
   display: flex;
   align-items: center;

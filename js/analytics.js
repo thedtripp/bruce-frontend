@@ -104,6 +104,20 @@ function colorForCount(count, max) {
   return `hsl(${HEATMAP_HUE}, ${HEATMAP_SATURATION}%, ${lightness.toFixed(1)}%)`;
 }
 
+// KAN-48: daily_report.yml's `fetch` job runs on these 4 UTC hours (see
+// .github/workflows/daily_report.yml's cron schedule) -- marked on the
+// heatmap so posting-time vs. scrape-time gap is visible directly instead
+// of inferred (the ticket's own ask). Rotated through the same
+// localOffsetHours() transform as the heatmap data itself, so a marker
+// lands on the column that's actually local-time-correct for the viewer,
+// not the raw UTC hour number.
+const SCRAPE_RUN_UTC_HOURS = [13, 16, 19, 21];
+
+function scrapeRunLocalHours() {
+  const offset = localOffsetHours();
+  return new Set(SCRAPE_RUN_UTC_HOURS.map((hour) => (((hour + offset) % 24) + 24) % 24));
+}
+
 function renderLegend(max) {
   const black = colorForCount(0, max);
   const blue = colorForCount(max / 2, max);
@@ -120,19 +134,23 @@ function renderHeatmap() {
   const totals = toLocalTime(aggregateHistogram(heatmapSourceFilter.value));
   const max = Math.max(1, ...DAYS.flatMap((day) => totals[day.key]));
   renderLegend(max);
+  const scrapeHours = scrapeRunLocalHours();
 
   const cells = ['<div class="hm-corner"></div>'];
   HOURS.forEach((hour) => {
-    cells.push(`<div class="hm-hour-label">${hour}</div>`);
+    const scrapeClass = scrapeHours.has(hour) ? " hm-hour-label--scrape-run" : "";
+    const title = scrapeHours.has(hour) ? ' title="bruce checks around this time"' : "";
+    cells.push(`<div class="hm-hour-label${scrapeClass}"${title}>${hour}</div>`);
   });
   DAYS.forEach((day) => {
     cells.push(`<div class="hm-label">${day.label}</div>`);
     HOURS.forEach((hour) => {
       const count = totals[day.key][hour];
       const color = colorForCount(count, max);
+      const scrapeClass = scrapeHours.has(hour) ? " hm-cell--scrape-run" : "";
       const tooltip = `${day.label} ${String(hour).padStart(2, "0")}:00 (your local time) -- ${count} posting(s)`;
       cells.push(
-        `<div class="hm-cell" style="background: ${color}" data-tooltip="${escapeHtml(tooltip)}"></div>`
+        `<div class="hm-cell${scrapeClass}" style="background: ${color}" data-tooltip="${escapeHtml(tooltip)}"></div>`
       );
     });
   });
